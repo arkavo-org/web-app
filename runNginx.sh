@@ -6,15 +6,12 @@ CURRENT_DIR=$(basename "$PWD")
 export CONTAINER_NAME="${PARENT_DIR}-${CURRENT_DIR}"
 echo "CONTAINER NAME $CONTAINER_NAME"
 
-# Start the Docker Compose stack
-docker network inspect arkavo >/dev/null 2>&1 || docker network create arkavo
-
 # run the HTTPS proxy
 docker run -d \
   --name arkavo-dev-nginx \
-  --network arkavo \
   --restart always \
-  -p 3001:443 \
+  --net=host \
+  -p 5173:443 \
   -v "$(pwd)/nginx.conf:/etc/nginx/nginx.conf" \
   -v "./keys/privkey.pem:/keys/privkey.pem" \
   -v "./keys/fullchain.pem:/keys/fullchain.pem" \
