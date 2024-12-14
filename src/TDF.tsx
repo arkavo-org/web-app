@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useKeycloak } from '@react-keycloak/web';
-import { NanoTDFDatasetClient } from '@opentdf/sdk';
+import {AuthProvider, HttpRequest, NanoTDFDatasetClient} from '@opentdf/sdk';
+import {DatasetConfig} from "@opentdf/sdk/nano";
 
 const TDFContent: React.FC = () => {
   const { keycloak } = useKeycloak();
@@ -14,44 +15,26 @@ const TDFContent: React.FC = () => {
   }>({ type: null, message: null });
 
   useEffect(() => {
-    const initTDF = async () => {
+    (async () => {
       if (!keycloak.authenticated) return;
 
       try {
         setStatus({ type: 'info', message: 'Initializing TDF client...' });
 
-        // Custom auth provider with necessary methods
-        const authProvider = {
-          getToken: async () => keycloak.token || "",
-          updateClientPublicKey: async (publicKey: string) => {
-            console.log('Updating client public key:', publicKey);
-            try {
-              const response = await fetch(
-                `${import.meta.env.VITE_KAS_ENDPOINT}/updatePublicKey`, // Replace with your endpoint
-                {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${keycloak.token}`,
-                  },
-                  body: JSON.stringify({ publicKey }),
-                }
-              );
-
-              if (!response.ok) {
-                throw new Error(`Failed to update client public key: ${response.statusText}`);
-              }
-            } catch (error) {
-              console.error('Error updating client public key:', error);
-              throw error;
-            }
+        const authProvider: AuthProvider = {
+          async updateClientPublicKey(): Promise<void> {
+            // nothing
+            return
           },
-        };
-
+          withCreds(httpReq: HttpRequest): Promise<HttpRequest> {
+            httpReq.headers.Authorization = `Bearer ${keycloak.token}`;
+            return Promise.resolve(httpReq);
+          }
+        }
         const client = new NanoTDFDatasetClient({
           authProvider,
-          kasEndpoint: import.meta.env.VITE_KAS_ENDPOINT, // Replace with your KAS endpoint
-        });
+          kasEndpoint: import.meta.env.VITE_KAS_ENDPOINT,
+        } as DatasetConfig);
 
         setTdfClient(client);
         setStatus({ type: 'success', message: 'TDF client initialized successfully' });
@@ -64,9 +47,7 @@ const TDFContent: React.FC = () => {
           }`,
         });
       }
-    };
-
-    initTDF();
+    })();
   }, [keycloak.authenticated, keycloak.token]);
 
   const handleEncrypt = async () => {
@@ -136,8 +117,8 @@ const TDFContent: React.FC = () => {
             status.type === 'error'
               ? 'bg-red-100 text-red-700'
               : status.type === 'success'
-              ? 'bg-green-100 text-green-700'
-              : 'bg-blue-100 text-blue-700'
+                ? 'bg-green-100 text-green-700'
+                : 'bg-blue-100 text-blue-700'
           }`}
         >
           {status.message}

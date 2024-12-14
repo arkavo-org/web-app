@@ -51,7 +51,7 @@
 // in the presented order. The first working server will be used for
 // the whole session.
 //
-var server = null;
+export var server = null;
 var serverUrl = window.location.hostname;
 //httpServerUrl = "janus.juliancoy.us";
 var httpServerUrl = "janus.baltagi.us:8089";
@@ -85,6 +85,6 @@ else if(window.location.protocol === 'http:')
 // By default we leave the iceServers variable empty, which again means
 // janus.js will fallback to the Google STUN server by default:
 //
-var iceServers = null;
+export var iceServers = null;
 
-export { server, iceServers };
+export default { server, iceServers };
